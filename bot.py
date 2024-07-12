@@ -12,15 +12,22 @@ from utils import (
 )
 from datasets.utils.logging import disable_progress_bar
 import streamlit as st
+from streamlit_option_menu import option_menu
+import extra_streamlit_components as stx
 from threading import Event, Thread
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.api_core.exceptions import GoogleAPIError
 
 load_dotenv()
 
 # Path to your Firebase Admin SDK private key file
-cred = credentials.Certificate(r'.\moa-groq-firebase-adminsdk-2qy4x-501fa1435d.json')
+cred_path = r'.\moa-groq-firebase-adminsdk-qo6gc-4fbf31650a.json'
+if not os.path.exists(cred_path):
+    raise FileNotFoundError(f"Credential file not found: {cred_path}")
+
+cred = credentials.Certificate(cred_path)
 
 # Initialize Firebase app if not already initialized
 if not firebase_admin._apps:
@@ -43,11 +50,12 @@ class SharedValue:
 
 # Default reference models
 default_reference_models = [
+    "gemma2-9b-it",
+    "gemma-7b-it",
     "llama3-70b-8192",
     "llama3-8b-8192",
     "mixtral-8x7b-32768",
-    "gemma-7b-it",
-    "gemma2-9b-it",
+
 ]
 
 # Default system prompt
@@ -64,28 +72,42 @@ def save_user_data(email):
         "user_system_prompt": st.session_state.user_system_prompt,
         "selected_models": st.session_state.selected_models,
         "conversations": st.session_state.conversations,
+        "custom_gpts": st.session_state.custom_gpts,
     }
-    db.collection('user_data').document(email).set(user_data)
+    logger.info(f"Saving user data for {email}")
+    try:
+        db.collection('user_data').document(email).set(user_data)
+    except GoogleAPIError as e:
+        logger.error(f"Failed to save user data for {email}: {e}")
+        st.error("Failed to save user data. Please try again later.")
 
 def load_user_data(email):
     doc_ref = db.collection('user_data').document(email)
-    doc = doc_ref.get()
-    if doc.exists:
-        user_data = doc.to_dict()
-        st.session_state.messages = user_data.get("messages", [{"role": "system", "content": default_system_prompt}])
-        st.session_state.user_system_prompt = user_data.get("user_system_prompt", "")
-        st.session_state.selected_models = user_data.get("selected_models", default_reference_models.copy())
-        st.session_state.conversations = user_data.get("conversations", [])
-    else:
-        st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
-        st.session_state.user_system_prompt = ""
-        st.session_state.selected_models = default_reference_models.copy()
-        st.session_state.conversations = []
+    try:
+        doc = doc_ref.get()
+        if doc.exists:
+            logger.info(f"Loading user data for {email}")
+            user_data = doc.to_dict()
+            st.session_state.messages = user_data.get("messages", [{"role": "system", "content": default_system_prompt}])
+            st.session_state.user_system_prompt = user_data.get("user_system_prompt", "")
+            st.session_state.selected_models = user_data.get("selected_models", default_reference_models.copy())
+            st.session_state.conversations = user_data.get("conversations", [])
+            st.session_state.custom_gpts = user_data.get("custom_gpts", [])
+        else:
+            logger.info(f"No existing user data for {email}, initializing defaults")
+            st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
+            st.session_state.user_system_prompt = ""
+            st.session_state.selected_models = default_reference_models.copy()
+            st.session_state.conversations = []
+            st.session_state.custom_gpts = []
+    except GoogleAPIError as e:
+        logger.error(f"Failed to load user data for {email}: {e}")
+        st.error("Failed to load user data. Please try again later.")
 
 def delete_conversation(index):
     st.session_state.conversations.pop(index)
     save_user_data(st.session_state.user_email)
-    st.session_state.conversation_deleted = True  # Set flag to indicate deletion
+    st.session_state.conversation_deleted = True
 
 # Initialize session state
 if "user_email" not in st.session_state:
@@ -103,19 +125,40 @@ if "selected_models" not in st.session_state:
 if "conversations" not in st.session_state:
     st.session_state.conversations = []
 
+if "custom_gpts" not in st.session_state:
+    st.session_state.custom_gpts = []
+
 if "conversation_deleted" not in st.session_state:
     st.session_state.conversation_deleted = False
+
+if "show_modal" not in st.session_state:
+    st.session_state.show_modal = False
+
+if "edit_gpt_index" not in st.session_state:
+    st.session_state.edit_gpt_index = None
 
 disable_progress_bar()
 
 # Set page configuration
 st.set_page_config(page_title="Groq MoA Chatbot", page_icon="🤖", layout="wide")
 
-# Custom CSS (previous CSS code remains the same)
+# Custom CSS
 st.markdown(
     """
     <style>
-    /* ... (previous CSS code) ... */
+    .sidebar-content {
+        padding: 1rem;
+    }
+    .sidebar-content .custom-gpt {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+        border-bottom: 1px solid #ccc;
+    }
+    .sidebar-content .custom-gpt:last-child {
+        border-bottom: none;
+    }
     .remove-button {
         background-color: transparent;
         color: red;
@@ -123,7 +166,54 @@ st.markdown(
         cursor: pointer;
         font-size: 16px;
     }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
     </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# JavaScript to handle modal display
+st.markdown(
+    """
+    <script>
+    function openModal() {
+        document.getElementById("create-custom-gpt-modal").style.display = "block";
+    }
+    function closeModal() {
+        document.getElementById("create-custom-gpt-modal").style.display = "none";
+    }
+    </script>
     """,
     unsafe_allow_html=True
 )
@@ -175,12 +265,14 @@ def main():
         st.sidebar.subheader("Login")
         email = st.sidebar.text_input("Email")
         if st.sidebar.button("Login"):
+            logger.info(f"User {email} is logging in")
             st.session_state.user_email = email
             load_user_data(email)
             st.rerun()
     else:
         st.sidebar.markdown(f"Welcome, {st.session_state.user_email}!")
         if st.sidebar.button("Logout"):
+            logger.info(f"User {st.session_state.user_email} is logging out")
             save_user_data(st.session_state.user_email)
             st.session_state.user_email = None
             st.rerun()
@@ -213,8 +305,89 @@ def main():
             if st.button("Update System Instructions"):
                 st.session_state.user_system_prompt = user_prompt
                 combined_prompt = f"{default_system_prompt}\n\nAdditional instructions: {user_prompt}"
-                st.session_state.messages[0]["content"] = combined_prompt
+                if len(st.session_state.messages) > 0:
+                    st.session_state.messages[0]["content"] = combined_prompt
                 st.success("System instructions updated successfully!")
+
+        # Custom GPT creation button
+        st.button("Create Custom GPT", on_click=lambda: st.session_state.update({"show_modal": True}))
+
+        # Modal window for creating custom GPT
+        if st.session_state.get('show_modal', False):
+            st.markdown(
+                """
+                <div id="create-custom-gpt-modal" class="modal" style="display:block;">
+                  <div class="modal-content">
+                    <span class="close" onclick="closeModal();">&times;</span>
+                    <h2>Create Custom GPT</h2>
+                    <form id="create-gpt-form">
+                      <label for="gpt-name">Name your GPT:</label>
+                      <input type="text" id="gpt-name" name="gpt-name" required>
+                      <label for="gpt-instructions">Instructions for your GPT:</label>
+                      <textarea id="gpt-instructions" name="gpt-instructions" rows="5" required></textarea>
+                      <div class="modal-buttons">
+                        <button type="button" onclick="submitGptForm();">Create</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal();">Cancel</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <script>
+                function closeModal() {
+                    document.getElementById("create-custom-gpt-modal").style.display = "none";
+                    fetch('/?close_modal=true');
+                }
+                function submitGptForm() {
+                    var name = document.getElementById("gpt-name").value;
+                    var instructions = document.getElementById("gpt-instructions").value;
+                    fetch('/?create_gpt=true&name=' + encodeURIComponent(name) + '&instructions=' + encodeURIComponent(instructions))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            closeModal();
+                            window.location.reload();
+                        } else {
+                            alert('Failed to create GPT');
+                        }
+                    });
+                }
+                </script>
+                """,
+                unsafe_allow_html=True
+            )
+
+        # Handle modal actions
+        query_params = st.query_params
+        if "close_modal" in query_params:
+            st.session_state.show_modal = False
+            st.set_query_params()
+
+        if "create_gpt" in query_params:
+            name = query_params.get("name")[0]
+            instructions = query_params.get("instructions")[0]
+            new_gpt = {"name": name, "instructions": instructions}
+            st.session_state.custom_gpts.append(new_gpt)
+            save_user_data(st.session_state.user_email)
+            st.set_query_params(create_gpt=None)
+            st.experimental_rerun()
+
+        # List of custom GPTs
+        st.sidebar.subheader("Your Custom GPTs")
+        for idx, gpt in enumerate(st.session_state.custom_gpts):
+            with st.sidebar:
+                gpt_container = st.container()
+                with gpt_container:
+                    if st.button(gpt['name'], key=f"view_gpt_{idx}"):
+                        st.write(f"**Name:** {gpt['name']}")
+                        st.write(f"**Instructions:** {gpt['instructions']}")
+                        st.write(f"**Created At:** {gpt.get('created_at', 'N/A')}")
+                        if st.button("Edit", key=f"edit_gpt_{idx}"):
+                            st.session_state.edit_gpt_index = idx
+                            st.session_state.show_modal = True
+                        if st.button("Delete", key=f"delete_gpt_{idx}"):
+                            st.session_state.custom_gpts.pop(idx)
+                            save_user_data(st.session_state.user_email)
+                            st.experimental_rerun()
 
         # Start new conversation button
         if st.button("Start New Conversation", key="new_conversation"):
