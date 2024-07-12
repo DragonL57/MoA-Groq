@@ -14,8 +14,19 @@ from datasets.utils.logging import disable_progress_bar
 import streamlit as st
 from threading import Event, Thread
 from dotenv import load_dotenv
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 load_dotenv()
+
+# Path to your Firebase Admin SDK private key file
+cred = credentials.Certificate(r'C:\Users\vmthe\MOA-groq\moa-groq-firebase-adminsdk-2qy4x-501fa1435d.json')
+
+# Initialize Firebase app if not already initialized
+if not firebase_admin._apps:
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 class SharedValue:
     def __init__(self, initial_value=0.0):
@@ -47,36 +58,34 @@ Always strive to be respectful, avoid harmful content, and admit when you're uns
 Always respond in the user's language."""
 
 # User data management functions
-def create_user_folder(email):
-    user_folder = os.path.join("user_data", email)
-    os.makedirs(user_folder, exist_ok=True)
-    return user_folder
-
 def save_user_data(email):
-    user_folder = create_user_folder(email)
     user_data = {
         "messages": st.session_state.messages,
         "user_system_prompt": st.session_state.user_system_prompt,
         "selected_models": st.session_state.selected_models,
         "conversations": st.session_state.conversations,
     }
-    with open(os.path.join(user_folder, "session_data.json"), "w") as f:
-        json.dump(user_data, f, default=str)
+    db.collection('user_data').document(email).set(user_data)
 
 def load_user_data(email):
-    user_folder = create_user_folder(email)
-    try:
-        with open(os.path.join(user_folder, "session_data.json"), "r") as f:
-            user_data = json.load(f)
+    doc_ref = db.collection('user_data').document(email)
+    doc = doc_ref.get()
+    if doc.exists:
+        user_data = doc.to_dict()
         st.session_state.messages = user_data.get("messages", [{"role": "system", "content": default_system_prompt}])
         st.session_state.user_system_prompt = user_data.get("user_system_prompt", "")
         st.session_state.selected_models = user_data.get("selected_models", default_reference_models.copy())
         st.session_state.conversations = user_data.get("conversations", [])
-    except FileNotFoundError:
+    else:
         st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
         st.session_state.user_system_prompt = ""
         st.session_state.selected_models = default_reference_models.copy()
         st.session_state.conversations = []
+
+def delete_conversation(index):
+    st.session_state.conversations.pop(index)
+    save_user_data(st.session_state.user_email)
+    st.session_state.conversation_deleted = True  # Set flag to indicate deletion
 
 # Initialize session state
 if "user_email" not in st.session_state:
@@ -94,6 +103,9 @@ if "selected_models" not in st.session_state:
 if "conversations" not in st.session_state:
     st.session_state.conversations = []
 
+if "conversation_deleted" not in st.session_state:
+    st.session_state.conversation_deleted = False
+
 disable_progress_bar()
 
 # Set page configuration
@@ -104,6 +116,13 @@ st.markdown(
     """
     <style>
     /* ... (previous CSS code) ... */
+    .remove-button {
+        background-color: transparent;
+        color: red;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -204,10 +223,15 @@ def main():
 
         # Previous conversations
         st.subheader("Previous Conversations")
-        for idx, conv in enumerate(st.session_state.conversations):
-            if st.button(f"{idx + 1}. {conv['first_question'][:30]}...", key=f"conv_{idx}"):
-                st.session_state.messages = conv['messages']
-                st.rerun()
+        for idx, conv in enumerate(reversed(st.session_state.conversations)):  # Reverse the list
+            cols = st.columns([0.9, 0.1])
+            with cols[0]:
+                if st.button(f"{len(st.session_state.conversations) - idx}. {conv['first_question'][:30]}...", key=f"conv_{idx}"):
+                    st.session_state.messages = conv['messages']
+                    st.rerun()
+            with cols[1]:
+                if st.button("❌", key=f"del_{idx}", on_click=delete_conversation, args=(len(st.session_state.conversations) - idx - 1,)):
+                    st.session_state.conversation_deleted = True
 
         # Add a download button for chat history
         if st.button("Download Chat History"):
@@ -218,6 +242,11 @@ def main():
                 file_name="chat_history.txt",
                 mime="text/plain"
             )
+
+    # Trigger rerun if a conversation was deleted
+    if st.session_state.conversation_deleted:
+        st.session_state.conversation_deleted = False
+        st.experimental_rerun()
 
     # Chat interface
     st.header("💬 Chat with MoA")
@@ -291,18 +320,17 @@ def main():
                     generate_fn=generate_together_stream
                 )
 
+                full_response = ""
+                for chunk in output:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+
                 with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    full_response = ""
-                    for chunk in output:
-                        if chunk.choices[0].delta.content:
-                            full_response += chunk.choices[0].delta.content
-                        message_placeholder.markdown(full_response + "▌")
-                        # Update timer display
-                        timer_placeholder.markdown(f"⏳ **Elapsed time: {elapsed_time.get():.2f} seconds**")
-                    message_placeholder.markdown(full_response)
+                    st.markdown(full_response)
                 
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.conversations[-1]['messages'] = st.session_state.messages.copy()
+                save_user_data(st.session_state.user_email)  # Save data after the response
 
             end_time = time.time()
             duration = end_time - start_time
