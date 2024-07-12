@@ -20,7 +20,7 @@ from firebase_admin import credentials, firestore
 load_dotenv()
 
 # Path to your Firebase Admin SDK private key file
-cred = credentials.Certificate(r'C:\Users\vmthe\MOA-groq\moa-groq-firebase-adminsdk-2qy4x-501fa1435d.json')
+cred = credentials.Certificate(r'.\moa-groq-firebase-adminsdk-2qy4x-501fa1435d.json')
 
 # Initialize Firebase app if not already initialized
 if not firebase_admin._apps:
