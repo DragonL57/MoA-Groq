@@ -15,8 +15,8 @@ DEBUG = int(os.environ.get("DEBUG", "0"))
 def generate_together(
     model,
     messages,
-    max_tokens=2048,
-    temperature=0.7,
+    max_tokens=8192,
+    temperature=0.6,
     streaming=True,
 ):
     output = None
@@ -76,8 +76,8 @@ def generate_together(
 def generate_together_stream(
     model,
     messages,
-    max_tokens=2048,
-    temperature=0.7,
+    max_tokens=8192,
+    temperature=0.6,
 ):
     endpoint = "https://api.groq.com/openai/v1"
     api_key = os.environ.get('GROQ_API_KEY')
@@ -103,8 +103,8 @@ def generate_together_stream(
 def generate_openai(
     model,
     messages,
-    max_tokens=2048,
-    temperature=0.7,
+    max_tokens=8192,
+    temperature=0.6,
 ):
     api_key = os.environ.get('OPENAI_API_KEY')
 
