@@ -50,10 +50,10 @@ class SharedValue:
 
 # Default reference models
 default_reference_models = [
-    "gemma2-9b-it",
-    "gemma-7b-it",
     "llama3-70b-8192",
     "llama3-8b-8192",
+    "gemma2-9b-it",
+    "gemma-7b-it",
     "mixtral-8x7b-32768",
 ]
 
