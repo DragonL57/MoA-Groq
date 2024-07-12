@@ -23,7 +23,7 @@ from google.api_core.exceptions import GoogleAPIError
 load_dotenv()
 
 # Path to your Firebase Admin SDK private key file
-cred_path = r'./moa-groq-firebase-adminsdk-qo6gc-9259e672b1.json'
+cred_path = r'.\moa-groq-firebase-adminsdk-qo6gc-9259e672b1.json'
 if not os.path.exists(cred_path):
     raise FileNotFoundError(f"Credential file not found: {cred_path}")
 
