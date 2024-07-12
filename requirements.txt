@@ -4,3 +4,4 @@ loguru
 datasets
 streamlit
 python-dotenv
+firebase-admin
