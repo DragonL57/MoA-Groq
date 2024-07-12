@@ -23,7 +23,7 @@ from google.api_core.exceptions import GoogleAPIError
 load_dotenv()
 
 # Path to your Firebase Admin SDK private key file
-cred_path = r'moa-groq-firebase-adminsdk-qo6gc-9259e672b1.json'
+cred_path = r'.\moa-groq-firebase-adminsdk-qo6gc-4fbf31650a.json'
 if not os.path.exists(cred_path):
     raise FileNotFoundError(f"Credential file not found: {cred_path}")
 
@@ -55,7 +55,6 @@ default_reference_models = [
     "llama3-70b-8192",
     "llama3-8b-8192",
     "mixtral-8x7b-32768",
-
 ]
 
 # Default system prompt
@@ -67,46 +66,49 @@ Always respond in the user's language."""
 
 # User data management functions
 def save_user_data(email):
-    user_data = {
-        "messages": st.session_state.messages,
-        "user_system_prompt": st.session_state.user_system_prompt,
-        "selected_models": st.session_state.selected_models,
-        "conversations": st.session_state.conversations,
-        "custom_gpts": st.session_state.custom_gpts,
-    }
-    logger.info(f"Saving user data for {email}")
-    try:
-        db.collection('user_data').document(email).set(user_data)
-    except GoogleAPIError as e:
-        logger.error(f"Failed to save user data for {email}: {e}")
-        st.error("Failed to save user data. Please try again later.")
+    if email:  # Ensure email is set before saving data
+        user_data = {
+            "messages": st.session_state.messages,
+            "user_system_prompt": st.session_state.user_system_prompt,
+            "selected_models": st.session_state.selected_models,
+            "conversations": st.session_state.conversations,
+            "custom_gpts": st.session_state.custom_gpts,
+        }
+        logger.info(f"Saving user data for {email}")
+        try:
+            db.collection('user_data').document(email).set(user_data)
+        except GoogleAPIError as e:
+            logger.error(f"Failed to save user data for {email}: {e}")
+            st.error("Failed to save user data. Please try again later.")
 
 def load_user_data(email):
-    doc_ref = db.collection('user_data').document(email)
-    try:
-        doc = doc_ref.get()
-        if doc.exists:
-            logger.info(f"Loading user data for {email}")
-            user_data = doc.to_dict()
-            st.session_state.messages = user_data.get("messages", [{"role": "system", "content": default_system_prompt}])
-            st.session_state.user_system_prompt = user_data.get("user_system_prompt", "")
-            st.session_state.selected_models = user_data.get("selected_models", default_reference_models.copy())
-            st.session_state.conversations = user_data.get("conversations", [])
-            st.session_state.custom_gpts = user_data.get("custom_gpts", [])
-        else:
-            logger.info(f"No existing user data for {email}, initializing defaults")
-            st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
-            st.session_state.user_system_prompt = ""
-            st.session_state.selected_models = default_reference_models.copy()
-            st.session_state.conversations = []
-            st.session_state.custom_gpts = []
-    except GoogleAPIError as e:
-        logger.error(f"Failed to load user data for {email}: {e}")
-        st.error("Failed to load user data. Please try again later.")
+    if email:  # Ensure email is set before loading data
+        doc_ref = db.collection('user_data').document(email)
+        try:
+            doc = doc_ref.get()
+            if doc.exists:
+                logger.info(f"Loading user data for {email}")
+                user_data = doc.to_dict()
+                st.session_state.messages = user_data.get("messages", [{"role": "system", "content": default_system_prompt}])
+                st.session_state.user_system_prompt = user_data.get("user_system_prompt", "")
+                st.session_state.selected_models = user_data.get("selected_models", default_reference_models.copy())
+                st.session_state.conversations = user_data.get("conversations", [])
+                st.session_state.custom_gpts = user_data.get("custom_gpts", [])
+            else:
+                logger.info(f"No existing user data for {email}, initializing defaults")
+                st.session_state.messages = [{"role": "system", "content": default_system_prompt}]
+                st.session_state.user_system_prompt = ""
+                st.session_state.selected_models = default_reference_models.copy()
+                st.session_state.conversations = []
+                st.session_state.custom_gpts = []
+        except GoogleAPIError as e:
+            logger.error(f"Failed to load user data for {email}: {e}")
+            st.error("Failed to load user data. Please try again later.")
 
 def delete_conversation(index):
     st.session_state.conversations.pop(index)
-    save_user_data(st.session_state.user_email)
+    if st.session_state.user_email:  # Ensure email is set before saving data
+        save_user_data(st.session_state.user_email)
     st.session_state.conversation_deleted = True
 
 # Initialize session state
@@ -386,7 +388,8 @@ def main():
                             st.session_state.show_modal = True
                         if st.button("Delete", key=f"delete_gpt_{idx}"):
                             st.session_state.custom_gpts.pop(idx)
-                            save_user_data(st.session_state.user_email)
+                            if st.session_state.user_email:
+                                save_user_data(st.session_state.user_email)
                             st.experimental_rerun()
 
         # Start new conversation button
@@ -503,7 +506,8 @@ def main():
                 
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
                 st.session_state.conversations[-1]['messages'] = st.session_state.messages.copy()
-                save_user_data(st.session_state.user_email)  # Save data after the response
+                if st.session_state.user_email:
+                    save_user_data(st.session_state.user_email)  # Save data after the response
 
             end_time = time.time()
             duration = end_time - start_time
