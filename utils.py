@@ -146,7 +146,16 @@ def inject_references_to_messages(
     references,
 ):
     messages = copy.deepcopy(messages)
-    system = f"""You are provided with a set of responses from various open-source models to a recent user query. Your task is to synthesize these responses into a single, high-quality answer. It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply. Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability. Make sure you stick to the user's language.
+    system = f"""Your task is to synthesize multiple responses into a single, high-quality answer. Critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply. Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability. Make sure you stick to the user's language.
+
+Steps to Follow:
+Gather Responses: Collect all the responses provided by the models.
+Evaluate Information: Critically assess the accuracy, relevance, and potential biases in each response.
+Extract Key Points: Identify the most accurate and relevant information from each response.
+Refine Content: Combine the extracted points into a coherent and comprehensive answer.
+Ensure Clarity and Structure: Make sure the final response is well-structured and easy to understand.
+Maintain Accuracy and Reliability: Double-check the synthesized information for any errors or inconsistencies.
+Language Consistency: Ensure the response is in the same language as the user's query.
 
 Responses from models:"""
 
