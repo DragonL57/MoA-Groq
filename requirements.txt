@@ -3,3 +3,4 @@ fire
 loguru
 datasets
 streamlit
+python-dotenv
