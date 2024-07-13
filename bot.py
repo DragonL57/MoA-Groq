@@ -258,7 +258,7 @@ Truy cập Bài nghiên cứu gốc để biết thêm chi tiết [Mixture-of-Ag
 Chatbot này sử dụng các mô hình ngôn ngữ lớn (LLM) sau đây làm các lớp – Mô hình tham chiếu, sau đó chuyển kết quả cho mô hình tổng hợp để tạo ra phản hồi cuối cùng.
 """
 
-def process_fn(item, temperature=0.5, max_tokens=6000):
+def process_fn(item, temperature=0.7, max_tokens=6000):
     references = item.get("references", [])
     model = item["model"]
     messages = item["instruction"]
@@ -316,7 +316,7 @@ def main():
                 default_reference_models,
                 index=0
             )
-            temperature = st.slider("Temperature", 0.0, 1.0, 0.5, 0.1)
+            temperature = st.slider("Temperature", 0.0, 2.0, 0.5, 0.1)
             max_tokens = st.slider("Max tokens", 1, 8192, 6000, 1)
 
             st.subheader("Reference Models")
