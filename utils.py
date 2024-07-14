@@ -141,21 +141,62 @@ def generate_openai(
 
     return output
 
+def translate_text(text, translation_model):
+    api_key = os.environ.get('GROQ_API_KEY')
+
+    if api_key is None:
+        logger.error("GROQ_API_KEY is not set")
+        return None
+
+    prompt = {
+        "role": "system",
+        "content": "Hãy dịch chính xác phản hồi sau đây sang ngôn ngữ của người dùng, đảm bảo rằng ý nghĩa và ngữ cảnh ban đầu được giữ nguyên. Đảm bảo rằng bản dịch rõ ràng và dễ hiểu."
+    }
+
+    messages = [
+        prompt,
+        {"role": "user", "content": text}
+    ]
+
+    for sleep_time in [1, 2, 4, 8, 16, 32]:
+        try:
+            endpoint = "https://api.groq.com/openai/v1/chat/completions"
+            res = requests.post(
+                endpoint,
+                json={
+                    "model": translation_model,
+                    "max_tokens": 6000,
+                    "temperature": 0.7,
+                    "messages": messages,
+                },
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                },
+            )
+
+            if "error" in res.json():
+                logger.error(res.json())
+                if res.json()["error"]["type"] == "invalid_request_error":
+                    logger.info("Input + output is longer than max_position_id.")
+                    return None
+
+            output = res.json()["choices"][0]["message"]["content"]
+            break
+
+        except Exception as e:
+            logger.error(e)
+            logger.info(f"Retry in {sleep_time}s..")
+            time.sleep(sleep_time)
+
+    output = output.strip()
+    return output
+
 def inject_references_to_messages(
     messages,
     references,
 ):
     messages = copy.deepcopy(messages)
-    system = f"""Your task is to synthesize multiple responses into a single, high-quality answer. Critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply. Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability. Make sure you stick to the user's language.
-
-Steps to Follow:
-Gather Responses: Collect all the responses provided by the models.
-Evaluate Information: Critically assess the accuracy, relevance, and potential biases in each response.
-Extract Key Points: Identify the most accurate and relevant information from each response.
-Refine Content: Combine the extracted points into a coherent and comprehensive answer.
-Ensure Clarity and Structure: Make sure the final response is well-structured and easy to understand.
-Maintain Accuracy and Reliability: Double-check the synthesized information for any errors or inconsistencies.
-Language Consistency: Ensure the response is in the same language as the user's query.
+    system = f"""Nhiệm vụ của bạn là tổng hợp các phản hồi từ nhiều mô hình tham chiếu thành một câu trả lời hoàn chỉnh và chất lượng cao. Hãy đánh giá kỹ lưỡng độ chính xác, mức độ liên quan và các tiềm năng thiên vị trong mỗi phản hồi. Câu trả lời của bạn cần được cấu trúc rõ ràng, mạch lạc và đáng tin cậy, đảm bảo cung cấp thông tin đầy đủ và chính xác nhất cho người dùng.
 
 Responses from models:"""
 
