@@ -213,7 +213,6 @@ def main():
 
     # Sidebar for configuration
     with st.sidebar:
-        st.sidebar.header("Settings")
 
         # Custom border for Web Search and Additional System Instructions
         st.markdown('<div class="custom-border">', unsafe_allow_html=True)
