@@ -44,7 +44,7 @@ default_reference_models = [
 ]
 
 # Default system prompt
-default_system_prompt = """Bạn là một trợ lý AI. Hãy cung cấp các câu trả lời chi tiết và chính xác dựa trên truy vấn của người dùng. Đảm bảo câu trả lời của bạn rõ ràng, dễ hiểu, và sử dụng ngôn ngữ mạch lạc như cách viết sách hoặc blog. Hãy sử dụng các từ nối để tạo sự liền mạch trong bài viết và giữ nguyên các thuật ngữ chuyên ngành nếu có.
+default_system_prompt = """Bạn là một trợ lý AI. Hãy cung cấp các câu trả lời chi tiết và chính xác dựa trên truy vấn của người dùng. Đảm bảo câu trả lời của bạn rõ ràng, dễ hiểu, và sử dụng ngôn ngữ mạch lạc như cách viết sách hoặc blog. Hãy sử dụng các từ nối để tạo sự liền mạch trong bài viết và giữ nguyên các thuật ngữ chuyên ngành nếu có. Trả lời dưới dạng các đoạn văn hoàn chỉnh, chi tiết và cụ thể. Nếu có luận điểm, hãy đưa ra ví dụ hoặc giải thích cụ thể cho luận điểm đó.
 """
 
 # Initialize session state
