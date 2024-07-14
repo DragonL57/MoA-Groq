@@ -162,11 +162,8 @@ st.markdown(
 welcome_message = """
 # MoA (Mixture-of-Agents) Chatbot
 
-Phương pháp Mixture of Agents (MoA) là một kỹ thuật mới, tổ chức nhiều mô hình ngôn ngữ lớn (LLM) thành một kiến trúc nhiều lớp. Mỗi lớp bao gồm nhiều tác nhân (mô hình LLM riêng lẻ). Các tác nhân này hợp tác với nhau bằng cách tạo ra các phản hồi dựa trên đầu ra từ các tác nhân ở lớp trước, từng bước tinh chỉnh và cải thiện kết quả cuối cùng, chỉ sử dụng các mô hình mã nguồn mở (Open-source)!
-
-Truy cập Bài nghiên cứu gốc để biết thêm chi tiết [Mixture-of-Agents Enhances Large Language Model Capabilities](https://arxiv.org/abs/2406.04692)
-
-Chatbot này sử dụng các mô hình ngôn ngữ lớn (LLM) sau đây làm các lớp – Mô hình tham chiếu, sau đó chuyển kết quả cho mô hình tổng hợp để tạo ra phản hồi cuối cùng.
+Made by Võ Mai Thế Long 👨‍🏫
+Powered by LLM models from Groq.com
 """
 
 def process_fn(item, temperature=0.7, max_tokens=2048):
@@ -288,7 +285,7 @@ def main():
         st.experimental_rerun()
 
     # Chat interface
-    st.header("💬 Chat with MoA")
+    st.header("")
     
     # Display chat messages from history on app rerun
     for message in st.session_state.messages[1:]:  # Skip the system message
