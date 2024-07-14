@@ -150,7 +150,7 @@ def translate_text(text, translation_model):
 
     prompt = {
         "role": "system",
-        "content": "Hãy dịch chính xác phản hồi sau đây sang ngôn ngữ của người dùng, đảm bảo rằng ý nghĩa và ngữ cảnh ban đầu được giữ nguyên. Đảm bảo rằng bản dịch rõ ràng và dễ hiểu."
+        "content": "Hãy dịch chính xác phản hồi sau đây sang ngôn ngữ của người dùng, giữ nguyên các thuật ngữ chuyên ngành và đảm bảo rằng ý nghĩa và ngữ cảnh ban đầu được giữ nguyên. Đảm bảo rằng bản dịch rõ ràng, dễ hiểu và mạch lạc như cách viết sách hoặc blog."
     }
 
     messages = [
@@ -196,7 +196,7 @@ def inject_references_to_messages(
     references,
 ):
     messages = copy.deepcopy(messages)
-    system = f"""Nhiệm vụ của bạn là tổng hợp các phản hồi từ nhiều mô hình tham chiếu thành một câu trả lời hoàn chỉnh và chất lượng cao. Hãy đánh giá kỹ lưỡng độ chính xác, mức độ liên quan và các tiềm năng thiên vị trong mỗi phản hồi. Câu trả lời của bạn cần được cấu trúc rõ ràng, mạch lạc và đáng tin cậy, đảm bảo cung cấp thông tin đầy đủ và chính xác nhất cho người dùng.
+    system = f"""Nhiệm vụ của bạn là tổng hợp các phản hồi từ nhiều mô hình tham chiếu thành một câu trả lời hoàn chỉnh và chất lượng cao. Hãy đánh giá kỹ lưỡng độ chính xác, mức độ liên quan và các tiềm năng thiên vị trong mỗi phản hồi. Câu trả lời của bạn cần được cấu trúc rõ ràng, mạch lạc, sử dụng các từ nối để tạo sự liền mạch và đảm bảo cung cấp thông tin đầy đủ và chính xác nhất cho người dùng. Hãy viết như cách viết sách hoặc blog và giữ nguyên các thuật ngữ chuyên ngành nếu có.
 
 Responses from models:"""
 
