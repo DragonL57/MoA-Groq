@@ -15,7 +15,7 @@ DEBUG = int(os.environ.get("DEBUG", "0"))
 def generate_together(
     model,
     messages,
-    max_tokens=6000,
+    max_tokens=2048,
     temperature=0.7,
     streaming=True,
 ):
@@ -76,7 +76,7 @@ def generate_together(
 def generate_together_stream(
     model,
     messages,
-    max_tokens=6000,
+    max_tokens=2048,
     temperature=0.7,
 ):
     endpoint = "https://api.groq.com/openai/v1"
@@ -103,7 +103,7 @@ def generate_together_stream(
 def generate_openai(
     model,
     messages,
-    max_tokens=6000,
+    max_tokens=2048,
     temperature=0.7,
 ):
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -165,7 +165,7 @@ def translate_text(text, translation_model):
                 endpoint,
                 json={
                     "model": translation_model,
-                    "max_tokens": 6000,
+                    "max_tokens": 2048,
                     "temperature": 0.7,
                     "messages": messages,
                 },
@@ -214,7 +214,7 @@ def generate_with_references(
     model,
     messages,
     references=[],
-    max_tokens=6000,
+    max_tokens=2048,
     temperature=0.7,
     generate_fn=generate_together,
 ):
@@ -227,3 +227,36 @@ def generate_with_references(
         temperature=temperature,
         max_tokens=max_tokens,
     )
+
+def google_search(query, num_results=10):  # Increase number of search results
+    api_key = os.environ.get('GOOGLE_API_KEY')
+    cse_id = os.environ.get('GOOGLE_CSE_ID')
+    if not api_key or not cse_id:
+        raise ValueError("Google API key or Custom Search Engine ID is missing")
+
+    search_url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "q": query,
+        "key": api_key,
+        "cx": cse_id,
+        "num": num_results
+    }
+
+    response = requests.get(search_url, params=params)
+    response.raise_for_status()
+    search_results = response.json()
+    return search_results
+
+def extract_snippets(search_results):
+    snippets = []
+    if "items" in search_results:
+        for item in search_results["items"]:
+            snippets.append(item["snippet"])
+    return snippets
+
+def extract_full_texts(search_results):
+    full_texts = []
+    if "items" in search_results:
+        for item in search_results["items"]:
+            full_texts.append(item["snippet"] + "\n\n" + item["link"])
+    return full_texts
