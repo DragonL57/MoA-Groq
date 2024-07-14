@@ -11,7 +11,6 @@ from utils import (
     translate_text,  # Thêm dòng này
     DEBUG,
 )
-from datasets.utils.logging import disable_progress_bar
 import streamlit as st
 from streamlit_option_menu import option_menu
 import extra_streamlit_components as stx
@@ -40,7 +39,6 @@ default_reference_models = [
     "llama3-8b-8192",
     "gemma2-9b-it",
     "gemma-7b-it",
-    "mixtral-8x7b-32768",
 ]
 
 # Default system prompt
@@ -72,7 +70,6 @@ if "edit_gpt_index" not in st.session_state:
 if "selected_translation_model" not in st.session_state:
     st.session_state.selected_translation_model = "gemma2-9b-it"
 
-disable_progress_bar()
 
 # Set page configuration
 st.set_page_config(page_title="Groq MoA Chatbot", page_icon="🤖", layout="wide")
@@ -316,8 +313,7 @@ def main():
         eval_set = datasets.Dataset.from_dict(data)
 
         try:
-            with st.spinner("Thinking..."):
-                progress_bar = st.progress(0)
+            with st.spinner("Typing..."):
                 for i_round in range(1):
                     eval_set = eval_set.map(
                         partial(
@@ -331,11 +327,9 @@ def main():
                     references = [item["output"] for item in eval_set]
                     data["references"] = references
                     eval_set = datasets.Dataset.from_dict(data)
-                    progress_bar.progress((i_round + 1) / 1)
                     # Update timer display
                     timer_placeholder.markdown(f"⏳ **Elapsed time: {elapsed_time.get():.2f} seconds**")
 
-                st.write("Aggregating results & querying the aggregate model...")
                 output = generate_with_references(
                     model=model,
                     temperature=temperature,
