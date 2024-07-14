@@ -163,6 +163,7 @@ welcome_message = """
 # MoA (Mixture-of-Agents) Chatbot
 
 Made by Võ Mai Thế Long 👨‍🏫
+
 Powered by LLM models from Groq.com
 """
 
@@ -285,7 +286,7 @@ def main():
         st.experimental_rerun()
 
     # Chat interface
-    st.header("")
+    st.header("Hello! I am MoA chatbot, please send me your questions below.")
     
     # Display chat messages from history on app rerun
     for message in st.session_state.messages[1:]:  # Skip the system message
