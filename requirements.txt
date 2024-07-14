@@ -1,6 +1,3 @@
-beautifulsoup4
-selenium
-webdriver-manager
 loguru
 python-dotenv
 requests
