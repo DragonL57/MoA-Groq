@@ -150,7 +150,7 @@ def translate_text(text, translation_model):
 
     prompt = {
         "role": "system",
-        "content": "Translate the following response accurately into the user's language, ensuring that the meaning and context are preserved. Maintain the use of specialized terms, and ensure the translation is clear, coherent, and reads like a well-written book or blog post. The response should be in structured paragraphs, providing thorough explanations, insights, and narratives, with elements of storytelling, clear examples, and well-reasoned arguments. Use a tone that is engaging, informative, and reflective of an educated and thoughtful author."
+        "content": "Hãy dịch chính xác phản hồi sau đây sang ngôn ngữ của người dùng, giữ nguyên các thuật ngữ chuyên ngành và đảm bảo rằng ý nghĩa và ngữ cảnh ban đầu được giữ nguyên. Đảm bảo rằng bản dịch rõ ràng và dễ hiểu. Trả lời dưới dạng các đoạn văn hoàn chỉnh, chi tiết và cụ thể."
     }
 
     messages = [
@@ -196,9 +196,9 @@ def inject_references_to_messages(
     references,
 ):
     messages = copy.deepcopy(messages)
-    system = f"""Your task is to synthesize the responses from multiple reference models into a single, high-quality answer. Carefully evaluate the accuracy, relevance, and potential biases in each response. Your answer should be structured in coherent paragraphs, providing thorough explanations, insights, and narratives. Make sure to incorporate elements of storytelling, clear examples, and well-reasoned arguments. Use a tone that is engaging, informative, and reflective of an educated and thoughtful author.
+    system = f"""Nhiệm vụ của bạn là tổng hợp các phản hồi từ nhiều mô hình tham chiếu thành một câu trả lời hoàn chỉnh và chất lượng cao. Đánh giá kỹ lưỡng độ chính xác và mức độ liên quan của mỗi phản hồi. Câu trả lời của bạn cần mạch lạc, rõ ràng và cung cấp đầy đủ thông tin. Trả lời dưới dạng các đoạn văn hoàn chỉnh, với giải thích và ví dụ cụ thể.
 
-Responses from models:"""
+Câu trả lời từ các model:"""
 
     for i, reference in enumerate(references):
         system += f"\n{i+1}. {reference}"
