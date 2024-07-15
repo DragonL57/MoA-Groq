@@ -1,17 +1,23 @@
 import os
 import json
-import time
 import requests
 import openai
 import copy
-
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 from loguru import logger
 from dotenv import load_dotenv
+from tenacity import retry, wait_exponential, stop_after_attempt
+
+nltk.download('punkt')
+nltk.download('stopwords')
 
 load_dotenv()
 
 DEBUG = int(os.environ.get("DEBUG", "0"))
 
+@retry(wait=wait_exponential(multiplier=1, min=1, max=60), stop=stop_after_attempt(6))
 def generate_together(
     model,
     messages,
@@ -21,47 +27,52 @@ def generate_together(
 ):
     output = None
 
-    for sleep_time in [1, 2, 4, 8, 16, 32]:
-        try:
-            endpoint = "https://api.groq.com/openai/v1/chat/completions"
-            api_key = os.environ.get('GROQ_API_KEY')
+    try:
+        endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        api_key = os.environ.get('GROQ_API_KEY')
 
-            if api_key is None:
-                logger.error("GROQ_API_KEY is not set")
+        if api_key is None:
+            logger.error("GROQ_API_KEY is not set")
+            return None
+
+        if DEBUG:
+            logger.debug(
+                f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}...`) to `{model}`."
+            )
+
+        res = requests.post(
+            endpoint,
+            json={
+                "model": model,
+                "max_tokens": max_tokens,
+                "temperature": (temperature if temperature > 1e-4 else 0),
+                "messages": messages,
+            },
+            headers={
+                "Authorization": f"Bearer {api_key}",
+            },
+            timeout=10  # Timeout added
+        )
+        res.raise_for_status()
+        if "error" in res.json():
+            logger.error(res.json())
+            if res.json()["error"]["type"] == "invalid_request_error":
+                logger.info("Input + output is longer than max_position_id.")
                 return None
 
-            if DEBUG:
-                logger.debug(
-                    f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}...`) to `{model}`."
-                )
+        output = res.json()["choices"][0]["message"]["content"]
 
-            res = requests.post(
-                endpoint,
-                json={
-                    "model": model,
-                    "max_tokens": max_tokens,
-                    "temperature": (temperature if temperature > 1e-4 else 0),
-                    "messages": messages,
-                },
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                },
-            )
-            if "error" in res.json():
-                logger.error(res.json())
-                if res.json()["error"]["type"] == "invalid_request_error":
-                    logger.info("Input + output is longer than max_position_id.")
-                    return None
-
-            output = res.json()["choices"][0]["message"]["content"]
-            break
-
-        except Exception as e:
-            logger.error(e)
-            if DEBUG:
-                logger.debug(f"Msgs: `{messages}`")
-            logger.info(f"Retry in {sleep_time}s..")
-            time.sleep(sleep_time)
+    except requests.exceptions.Timeout as e:
+        logger.error("Timeout error: ", e)
+        raise
+    except requests.exceptions.RequestException as e:
+        logger.error("HTTP error: ", e)
+        raise
+    except Exception as e:
+        logger.error("General error: ", e)
+        if DEBUG:
+            logger.debug(f"Msgs: `{messages}`")
+        raise
 
     if output is None:
         return output
@@ -73,33 +84,7 @@ def generate_together(
 
     return output
 
-def generate_together_stream(
-    model,
-    messages,
-    max_tokens=2048,
-    temperature=0.7,
-):
-    endpoint = "https://api.groq.com/openai/v1"
-    api_key = os.environ.get('GROQ_API_KEY')
-
-    if api_key is None:
-        logger.error("GROQ_API_KEY is not set")
-        return None
-
-    client = openai.OpenAI(
-        api_key=api_key, base_url=endpoint
-    )
-    endpoint = "https://api.groq.com/openai/v1/chat/completions"
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature if temperature > 1e-4 else 0,
-        max_tokens=max_tokens,
-        stream=True,  # this time, we set stream=True
-    )
-
-    return response
-
+@retry(wait=wait_exponential(multiplier=1, min=1, max=60), stop=stop_after_attempt(6))
 def generate_openai(
     model,
     messages,
@@ -116,31 +101,35 @@ def generate_openai(
         api_key=api_key,
     )
 
-    for sleep_time in [1, 2, 4, 8, 16, 32]:
-        try:
-            if DEBUG:
-                logger.debug(
-                    f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}`) to `{model}`."
-                )
-
-            completion = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
+    try:
+        if DEBUG:
+            logger.debug(
+                f"Sending messages ({len(messages)}) (last message: `{messages[-1]['content'][:20]}`) to `{model}`."
             )
-            output = completion.choices[0].message.content
-            break
 
-        except Exception as e:
-            logger.error(e)
-            logger.info(f"Retry in {sleep_time}s..")
-            time.sleep(sleep_time)
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        output = completion.choices[0].message.content
+
+    except requests.exceptions.Timeout as e:
+        logger.error("Timeout error: ", e)
+        raise
+    except requests.exceptions.RequestException as e:
+        logger.error("HTTP error: ", e)
+        raise
+    except Exception as e:
+        logger.error("General error: ", e)
+        raise
 
     output = output.strip()
 
     return output
 
+@retry(wait=wait_exponential(multiplier=1, min=1, max=60), stop=stop_after_attempt(6))
 def translate_text(text, translation_model):
     api_key = os.environ.get('GROQ_API_KEY')
 
@@ -158,35 +147,39 @@ def translate_text(text, translation_model):
         {"role": "user", "content": text}
     ]
 
-    for sleep_time in [1, 2, 4, 8, 16, 32]:
-        try:
-            endpoint = "https://api.groq.com/openai/v1/chat/completions"
-            res = requests.post(
-                endpoint,
-                json={
-                    "model": translation_model,
-                    "max_tokens": 2048,
-                    "temperature": 0.7,
-                    "messages": messages,
-                },
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                },
-            )
+    try:
+        endpoint = "https://api.groq.com/openai/v1/chat/completions"
+        res = requests.post(
+            endpoint,
+            json={
+                "model": translation_model,
+                "max_tokens": 2048,
+                "temperature": 0.7,
+                "messages": messages,
+            },
+            headers={
+                "Authorization": f"Bearer {api_key}",
+            },
+            timeout=10  # Timeout added
+        )
+        res.raise_for_status()
+        if "error" in res.json():
+            logger.error(res.json())
+            if res.json()["error"]["type"] == "invalid_request_error":
+                logger.info("Input + output is longer than max_position_id.")
+                return None
 
-            if "error" in res.json():
-                logger.error(res.json())
-                if res.json()["error"]["type"] == "invalid_request_error":
-                    logger.info("Input + output is longer than max_position_id.")
-                    return None
+        output = res.json()["choices"][0]["message"]["content"]
 
-            output = res.json()["choices"][0]["message"]["content"]
-            break
-
-        except Exception as e:
-            logger.error(e)
-            logger.info(f"Retry in {sleep_time}s..")
-            time.sleep(sleep_time)
+    except requests.exceptions.Timeout as e:
+        logger.error("Timeout error: ", e)
+        raise
+    except requests.exceptions.RequestException as e:
+        logger.error("HTTP error: ", e)
+        raise
+    except Exception as e:
+        logger.error("General error: ", e)
+        raise
 
     output = output.strip()
     return output
@@ -242,9 +235,25 @@ def google_search(query, num_results=10):  # Increase number of search results
         "num": num_results
     }
 
-    response = requests.get(search_url, params=params)
-    response.raise_for_status()
-    search_results = response.json()
+    try:
+        response = requests.get(search_url, params=params, timeout=10)
+        response.raise_for_status()
+        search_results = response.json()
+    except requests.exceptions.HTTPError as err:
+        if err.response.status_code == 400:
+            logger.error("Bad Request: ", err)
+        elif err.response.status_code == 401:
+            logger.error("Unauthorized: ", err)
+        elif err.response.status_code == 403:
+            logger.error("Forbidden: ", err)
+        raise
+    except requests.exceptions.Timeout as e:
+        logger.error("Timeout error: ", e)
+        raise
+    except requests.exceptions.RequestException as e:
+        logger.error("HTTP error: ", e)
+        raise
+
     return search_results
 
 def extract_snippets(search_results):
@@ -260,3 +269,59 @@ def extract_full_texts(search_results):
         for item in search_results["items"]:
             full_texts.append(item["snippet"] + "\n\n" + item["link"])
     return full_texts
+
+def extract_keywords(text):
+    # Tokenize và loại bỏ stopwords
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(text.lower())
+    keywords = [word for word in word_tokens if word.isalnum() and word not in stop_words]
+    return keywords
+
+def expand_query(conversation_history, current_query):
+    # Trích xuất từ khóa từ lịch sử cuộc trò chuyện
+    history_keywords = extract_keywords(conversation_history)
+    
+    # Trích xuất từ khóa từ câu hỏi hiện tại
+    current_keywords = extract_keywords(current_query)
+    
+    # Kết hợp và loại bỏ trùng lặp
+    all_keywords = list(set(history_keywords + current_keywords))
+    
+    # Tạo query mở rộng
+    expanded_query = " ".join(all_keywords)
+    
+    return expanded_query
+
+def generate_search_query(conversation_history, current_query):
+    # Sử dụng model Gemma-2-9B-IT để tạo query tìm kiếm
+    model = "gemma2-9b-it"
+    
+    # Tạo prompt cho model
+    system_prompt = """Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
+    Nhiệm vụ của bạn là phân tích lịch sử cuộc trò chuyện và câu hỏi hiện tại của người dùng, 
+    sau đó tạo ra một query tìm kiếm ngắn gọn, chính xác và hiệu quả. 
+    Query này sẽ được sử dụng để tìm kiếm thông tin trên web.
+    Hãy đảm bảo query bao gồm các từ khóa quan trọng và bối cảnh cần thiết."""
+
+    user_prompt = f"""Lịch sử cuộc trò chuyện:
+    {conversation_history}
+    
+    Câu hỏi hiện tại của người dùng:
+    {current_query}
+    
+    Hãy tạo một query tìm kiếm ngắn gọn và hiệu quả dựa trên thông tin trên."""
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+    # Gọi API để generate query
+    generated_query = generate_together(
+        model=model,
+        messages=messages,
+        max_tokens=100,
+        temperature=0.7
+    )
+
+    return generated_query.strip()
