@@ -6,11 +6,13 @@ import time
 from functools import partial
 from loguru import logger
 from utils import (
-    generate_together_stream,
+    generate_together,
     generate_with_references,
     translate_text,
     google_search,
     extract_snippets,
+    expand_query,
+    generate_search_query,
     DEBUG,
 )
 import streamlit as st
@@ -216,7 +218,12 @@ def main():
         st.markdown('<div class="custom-border">', unsafe_allow_html=True)
         
         st.header("Web Search")
-        st.session_state.web_search_enabled = st.checkbox("Enable Web Search", value=st.session_state.web_search_enabled)
+        web_search_enabled = st.checkbox("Enable Web Search", value=st.session_state.web_search_enabled)
+        if web_search_enabled != st.session_state.web_search_enabled:
+            st.session_state.web_search_enabled = web_search_enabled
+            if web_search_enabled:
+                st.session_state.selected_models = default_reference_models.copy()
+                st.session_state.selected_models.append("llama3-8b-8192")  # Thêm mô hình llama3-8b-8192
 
         st.header("Additional System Instructions")
         user_prompt = st.text_area("Add your instructions", value=st.session_state.user_system_prompt, height=100)
@@ -235,7 +242,7 @@ def main():
             model = st.selectbox(
                 "Main model (aggregator model)",
                 default_reference_models,
-                index=0
+                index=default_reference_models.index("llama3-8b-8192") if st.session_state.web_search_enabled else 0
             )
             temperature = st.slider("Temperature", 0.0, 2.0, 0.5, 0.1)
             max_tokens = st.slider("Max tokens", 1, 8192, 2048, 1)
@@ -272,7 +279,7 @@ def main():
 
         # Add a download button for chat history
         if st.button("Download Chat History"):
-            chat_history = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[1:]])  # Skip system message
+            chat_history = "\n".join([f"{m['role']}: {m['content']}"] for m in st.session_state.messages[1:])  # Skip system message
             st.download_button(
                 label="Download Chat History",
                 data=chat_history,
@@ -322,7 +329,11 @@ def main():
                 st.session_state.messages[0]["content"] = web_search_prompt  # Update the system prompt for web search
                 st.session_state.messages.append({"role": "assistant", "content": "Đang tìm kiếm trên web..."})
                 with st.spinner("Đang tìm kiếm trên web..."):
-                    search_results = google_search(prompt, num_results=10)  # Increase number of search results
+                    # Sử dụng hàm generate_search_query để tạo query
+                    conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.messages[:-1]])
+                    generated_query = generate_search_query(conversation_history, prompt)
+                    
+                    search_results = google_search(generated_query, num_results=10)  # Increase number of search results
                     snippets = extract_snippets(search_results)
                     sources = [item['link'] for item in search_results['items']]
                     search_summary = "\n\n".join(snippets) + "\n\nNguồn:\n" + "\n".join(sources)
@@ -356,17 +367,17 @@ def main():
                         max_tokens=max_tokens,
                         messages=st.session_state.messages,
                         references=references,
-                        generate_fn=generate_together_stream
+                        generate_fn=generate_together
                     )
 
                     full_response = ""
                     for chunk in output:
-                        try:
-                            if chunk.choices[0].delta.content:
-                                full_response += chunk.choices[0].delta.content
-                        except KeyError:
-                            logger.error(f"Error in chunk: {chunk}")
-                            st.error(f"An error occurred: {chunk}")
+                        if isinstance(chunk, dict) and "choices" in chunk:
+                            for choice in chunk["choices"]:
+                                if "delta" in choice and "content" in choice["delta"]:
+                                    full_response += choice["delta"]["content"]
+                        else:
+                            full_response += chunk
 
                     # Translate the response if necessary
                     if user_language != 'en':  # Assuming 'en' is the default language of the response
@@ -429,17 +440,17 @@ def main():
                         max_tokens=max_tokens,
                         messages=st.session_state.messages,
                         references=references,
-                        generate_fn=generate_together_stream
+                        generate_fn=generate_together
                     )
 
                     full_response = ""
                     for chunk in output:
-                        try:
-                            if chunk.choices[0].delta.content:
-                                full_response += chunk.choices[0].delta.content
-                        except KeyError:
-                            logger.error(f"Error in chunk: {chunk}")
-                            st.error(f"An error occurred: {chunk}")
+                        if isinstance(chunk, dict) and "choices" in chunk:
+                            for choice in chunk["choices"]:
+                                if "delta" in choice and "content" in choice["delta"]:
+                                    full_response += choice["delta"]["content"]
+                        else:
+                            full_response += chunk
 
                     # Translate the response if necessary
                     if user_language != 'en':  # Assuming 'en' is the default language of the response
@@ -467,7 +478,7 @@ def main():
 def format_response_with_sources(response, sources):
     source_dict = {f"[{i+1}]": url for i, url in enumerate(sources)}
     for i, (key, url) in enumerate(source_dict.items()):
-        response = response.replace(f"[{i+1}]", f"[{i+1}]({url})")
+        response.replace(f"[{i+1}]", f"[{i+1}]({url})")
     return response
 
 if __name__ == "__main__":
