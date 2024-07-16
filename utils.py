@@ -189,7 +189,7 @@ def inject_references_to_messages(
     references,
 ):
     messages = copy.deepcopy(messages)
-    system = f"""Bạn đã được cung cấp một tập hợp các phản hồi từ các mô hình mã nguồn mở khác nhau cho truy vấn người dùng mới nhất. Nhiệm vụ của bạn là tổng hợp các phản hồi này thành một câu trả lời duy nhất, chất lượng cao. Điều quan trọng là phải đánh giá phê phán thông tin được cung cấp trong các phản hồi này, nhận ra rằng một số thông tin có thể bị thiên vị hoặc sai lầm. Câu trả lời của bạn không nên đơn thuần sao chép các câu trả lời đã cho mà nên cung cấp một câu trả lời tinh chỉnh, chính xác và toàn diện cho yêu cầu. Đảm bảo câu trả lời của bạn được cấu trúc tốt, mạch lạc và tuân theo các tiêu chuẩn cao nhất về độ chính xác và độ tin cậy.
+    system = f"""Bạn đã được cung cấp một tập hợp các phản hồi từ các mô hình mã nguồn mở khác nhau cho truy vấn người dùng mới nhất. Nhiệm vụ của bạn là tổng hợp các phản hồi này thành một câu trả lời duy nhất, chất lượng cao. Điều quan trọng là phải đánh giá phê phán thông tin được cung cấp trong các phản hồi này, nhận ra rằng một số thông tin có thể bị thiên vị hoặc sai lầm. Câu trả lời của bạn không nên đơn thuần sao chép các câu trả lời đã cho mà nên cung cấp một câu trả lời tinh chỉnh, chính xác và toàn diện cho yêu cầu. Đảm bảo câu trả lời của bạn được cấu trúc tốt, mạch lạc và tuân theo các tiêu chuẩn cao nhất về độ chính xác và độ tin cậy. Đảm bảo giữ nguyên các thuật ngữ chuyên ngành và đảm bảo rằng ý nghĩa và ngữ cảnh ban đầu được giữ nguyên.
 
 Câu trả lời từ các model:"""
 
