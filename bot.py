@@ -1,3 +1,4 @@
+
 import os
 import json
 import datasets
@@ -68,7 +69,7 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
    - Sắp xếp thông tin theo thứ tự logic hoặc thời gian (nếu phù hợp).
    - Sử dụng các tiêu đề phụ để phân chia các phần khác nhau của câu trả lời.
 
-3. Ngôn ngữ và phong cách:
+3. Ngôn ngữ và phong cách: 
    - Sử dụng ngôn ngữ của người dùng trong toàn bộ câu trả lời.
    - Duy trì phong cách chuyên nghiệp, khách quan và dễ hiểu.
    - Giữ nguyên các thuật ngữ chuyên ngành và tên riêng trong ngôn ngữ gốc.
@@ -386,11 +387,17 @@ def main():
             try:
                 st.session_state.messages[0]["content"] = web_search_prompt  # Update the system prompt for web search
                 st.session_state.messages.append({"role": "assistant", "content": "Đang tìm kiếm trên web..."})
+
+
                 with st.spinner("Đang tìm kiếm trên web..."):
                     # Sử dụng hàm generate_search_query để tạo query
                     conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.messages[:-1]])
                     generated_query = generate_search_query(conversation_history, prompt, user_language)
                     
+                    # Display the search query used
+                    st.session_state.messages.append({"role": "system", "content": f"Search query: {generated_query}"})
+                    st.chat_message("system").markdown(f"Search query: {generated_query}")
+
                     search_results = google_search(generated_query, num_results=10)  # Increase number of search results
                     
                     # Kiểm tra nếu không có kết quả tìm kiếm
