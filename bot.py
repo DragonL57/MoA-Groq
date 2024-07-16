@@ -377,11 +377,20 @@ def main():
                     generated_query = generate_search_query(conversation_history, prompt)
                     
                     search_results = google_search(generated_query, num_results=10)  # Increase number of search results
+                    
+                    # Kiểm tra nếu không có kết quả tìm kiếm
+                    if 'items' not in search_results:
+                        raise ValueError("No search results found.")
+                    
                     snippets = extract_snippets(search_results)
                     sources = [item['link'] for item in search_results['items']]
-                    search_summary = "\n\n".join(snippets) + "\n\nNguồn:\n" + "\n".join(sources)
-                    st.session_state.messages.append({"role": "assistant", "content": search_summary})
-                    logger.info(f"Web search completed: {search_summary}")
+                    
+                    # Ghi log các kết quả tìm kiếm và đường link vào console
+                    logger.info(f"Search snippets: {snippets}")
+                    logger.info(f"Search sources: {sources}")
+                    
+                    search_summary = "\n\n".join(snippets)
+                    # Không thêm search_summary vào st.session_state.messages để tránh hiển thị trên UI
 
                     # Use the search summary to generate a final response using the main model
                     data = {
@@ -427,7 +436,8 @@ def main():
                         full_response = translate_text(full_response, st.session_state.selected_translation_model)
 
                     # Display the translated response with sources
-                    formatted_response = format_response_with_sources(full_response, sources)
+                    # formatted_response = format_response_with_sources(full_response, sources)
+                    formatted_response = full_response
 
                     with st.chat_message("assistant"):
                         st.markdown(formatted_response)
@@ -438,6 +448,7 @@ def main():
             except Exception as e:
                 logger.error(f"Error during web search: {str(e)}")
                 st.session_state.messages.append({"role": "assistant", "content": f"Lỗi khi tìm kiếm trên web: {str(e)}"})
+
         else:
             # Log main model and translation model
             logger.info(f"Main model: {model}")
@@ -519,10 +530,11 @@ def main():
                 timer_thread.join()
 
 def format_response_with_sources(response, sources):
-    source_dict = {f"[{i+1}]": url for i, url in enumerate(sources)}
-    for i, (key, url) in enumerate(source_dict.items()):
-        response = response.replace(f"[{i+1}]", f"[{i+1}]({url})")
+    # Ghi log các nguồn vào console
+    logger.info(f"Sources: {sources}")
+    # Không cần thêm các đường link vào phản hồi
     return response
+
 
 if __name__ == "__main__":
     main()
