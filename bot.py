@@ -59,8 +59,8 @@ Nếu không chắc chắn về thông tin, hãy nói rõ điều đó.
 web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả năng tổng hợp thông tin từ nhiều nguồn web. Nhiệm vụ của bạn là cung cấp câu trả lời chính xác, toàn diện và cập nhật dựa trên kết quả tìm kiếm web mới nhất. Hãy tuân theo các hướng dẫn sau:
 
 1. Phân tích và tổng hợp:
-   - Đánh giá độ tin cậy và liên quan của từng nguồn.
    - Tổng hợp thông tin từ nhiều nguồn để tạo ra câu trả lời toàn diện.
+   - Các thông tin phải chính xác với các nội dung trong web, có thể cung cấp thêm thông tin theo hiểu biết để toàn diện hơn nhưng phải được hỗ trợ bởi các nội dung trong web để tránh mơ hồ, đặc biệt là liên quan đến số liệu.
    - Giải quyết mọi mâu thuẫn giữa các nguồn (nếu có).
 
 2. Cấu trúc câu trả lời:
@@ -68,32 +68,27 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
    - Sắp xếp thông tin theo thứ tự logic hoặc thời gian (nếu phù hợp).
    - Sử dụng các tiêu đề phụ để phân chia các phần khác nhau của câu trả lời.
 
-3. Trích dẫn và nguồn:
-   - Trích dẫn trực tiếp thông tin quan trọng, đặt trong dấu ngoặc kép.
-   - Sau mỗi trích dẫn hoặc thông tin chính, thêm số tham chiếu trong ngoặc vuông, ví dụ: [1].
-   - Cung cấp danh sách đầy đủ các nguồn ở cuối câu trả lời, sử dụng số tham chiếu và tiêu đề bài viết.
-
-4. Ngôn ngữ và phong cách:
+3. Ngôn ngữ và phong cách:
    - Sử dụng ngôn ngữ của người dùng trong toàn bộ câu trả lời.
    - Duy trì phong cách chuyên nghiệp, khách quan và dễ hiểu.
    - Giữ nguyên các thuật ngữ chuyên ngành và tên riêng trong ngôn ngữ gốc.
 
-5. Xử lý thông tin không đầy đủ hoặc không chắc chắn:
+4. Xử lý thông tin không đầy đủ hoặc không chắc chắn:
    - Nếu thông tin không đầy đủ hoặc mâu thuẫn, hãy nêu rõ điều này.
    - Đề xuất các hướng tìm kiếm hoặc nguồn bổ sung nếu cần thiết.
 
-6. Cập nhật và liên quan:
+5. Cập nhật và liên quan:
    - Ưu tiên thông tin mới nhất và liên quan nhất đến truy vấn.
    - Nếu có sự khác biệt đáng kể giữa thông tin cũ và mới, hãy nêu rõ sự thay đổi.
 
-7. Tương tác và theo dõi:
+6. Tương tác và theo dõi:
    - Kết thúc bằng cách hỏi người dùng xem họ cần làm rõ hoặc bổ sung thông tin gì không.
    - Đề xuất các câu hỏi liên quan hoặc chủ đề mở rộng dựa trên nội dung tìm kiếm.
 
 Nội dung từ các trang web:
 {web_contents}
 
-Hãy trả lời câu hỏi của người dùng dựa trên các hướng dẫn trên và nội dung web được cung cấp. Đảm bảo câu trả lời của bạn chính xác, toàn diện và hữu ích.
+Hãy trả lời câu hỏi của người dùng dựa trên các hướng dẫn trên và nội dung web được cung cấp. Đảm bảo câu trả lời của bạn chính xác với thông tin từ các trang web, toàn diện và hữu ích.
 """
 
 # Initialize session state
@@ -188,21 +183,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# JavaScript to handle modal display
-st.markdown(
-    """
-    <script>
-    function openModal() {
-        document.getElementById("create-custom-gpt-modal").style.display = "block".
-    }
-    function closeModal() {
-        document.getElementById("create-custom-gpt-modal").style.display = "none".
-    }
-    </script>
-    """,
-    unsafe_allow_html=True
-)
-
 # Welcome message
 welcome_message = """
 # MoA (Mixture-of-Agents) Chatbot
@@ -249,6 +229,41 @@ def extract_url_from_prompt(prompt):
     url_pattern = re.compile(r'https?://\S+')
     url = url_pattern.search(prompt)
     return url.group(0) if url else None
+
+def generate_search_query(conversation_history, current_query, language):
+    # Sử dụng model Gemma-2-9B-IT để tạo query tìm kiếm
+    model = "gemma2-9b-it"
+    
+    # Tạo prompt cho model
+    system_prompt = f"""Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
+    Nhiệm vụ của bạn là phân tích lịch sử cuộc trò chuyện và câu hỏi hiện tại của người dùng, 
+    sau đó tạo ra một query tìm kiếm ngắn gọn, chính xác và hiệu quả. 
+    Query này sẽ được sử dụng để tìm kiếm thông tin trên web.
+    Hãy đảm bảo query bao gồm các từ khóa quan trọng và bối cảnh cần thiết.
+    Tạo query bằng ngôn ngữ của câu hỏi người dùng: {language}."""  # Thêm hướng dẫn để tạo query bằng ngôn ngữ của người dùng
+
+    user_prompt = f"""Lịch sử cuộc trò chuyện:
+    {conversation_history}
+    
+    Câu hỏi hiện tại của người dùng:
+    {current_query}
+    
+    Hãy tạo một query tìm kiếm ngắn gọn và hiệu quả dựa trên thông tin trên."""
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+    # Gọi API để generate query
+    generated_query = generate_together(
+        model=model,
+        messages=messages,
+        max_tokens=100,
+        temperature=0.7
+    )
+
+    return generated_query.strip()
 
 def main():
     # Display welcome message
@@ -374,7 +389,7 @@ def main():
                 with st.spinner("Đang tìm kiếm trên web..."):
                     # Sử dụng hàm generate_search_query để tạo query
                     conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.messages[:-1]])
-                    generated_query = generate_search_query(conversation_history, prompt)
+                    generated_query = generate_search_query(conversation_history, prompt, user_language)
                     
                     search_results = google_search(generated_query, num_results=10)  # Increase number of search results
                     
