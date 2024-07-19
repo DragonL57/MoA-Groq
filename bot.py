@@ -234,7 +234,7 @@ def extract_url_from_prompt(prompt):
 
 def generate_search_query(conversation_history, current_query, language):
     # Sử dụng model Gemma-2-9B-IT để tạo query tìm kiếm
-    model = "gemma2-9b-it"
+    model = "llama3-groq-70b-8192-tool-use-preview"
     
     # Tạo prompt cho model
     system_prompt = f"""Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
@@ -283,7 +283,7 @@ def main():
             st.session_state.web_search_enabled = web_search_enabled
             if web_search_enabled:
                 st.session_state.selected_models = default_reference_models.copy()
-                st.session_state.selected_models.append("llama3-8b-8192")  # Thêm mô hình llama3-8b-8192
+                st.session_state.selected_models.append("llama3-groq-70b-8192-tool-use-preview")  # Thêm mô hình llama3-8b-8192
 
         st.header("Additional System Instructions")
         user_prompt = st.text_area("Add your instructions", value=st.session_state.user_system_prompt, height=100)
