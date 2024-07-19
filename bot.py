@@ -42,8 +42,8 @@ class SharedValue:
 default_reference_models = [
     "llama3-groq-70b-8192-tool-use-preview",
     "llama3-70b-8192",
-    "llama3-8b-8192",
     "gemma2-9b-it",
+    "llama3-8b-8192",
     "gemma-7b-it",
 ]
 
