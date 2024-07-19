@@ -294,7 +294,7 @@ def expand_query(conversation_history, current_query):
 
 def generate_search_query(conversation_history, current_query):
     # Sử dụng model Gemma-2-9B-IT để tạo query tìm kiếm
-    model = "gemma2-9b-it"
+    model = "llama3-groq-70b-8192-tool-use-preview"
     
     # Tạo prompt cho model
     system_prompt = """Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
