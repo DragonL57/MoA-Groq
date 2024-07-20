@@ -291,37 +291,3 @@ def expand_query(conversation_history, current_query):
     expanded_query = " ".join(all_keywords)
     
     return expanded_query
-
-def generate_search_query(conversation_history, current_query):
-    # Sử dụng model Gemma-2-9B-IT để tạo query tìm kiếm
-    model = "gemma2-9b-it"
-    
-    # Tạo prompt cho model
-    system_prompt = """Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
-    Nhiệm vụ của bạn là phân tích lịch sử cuộc trò chuyện và câu hỏi hiện tại của người dùng, 
-    sau đó tạo ra một query tìm kiếm ngắn gọn, chính xác và hiệu quả. 
-    Query này sẽ được sử dụng để tìm kiếm thông tin trên web.
-    Hãy đảm bảo query bao gồm các từ khóa quan trọng và bối cảnh cần thiết."""
-
-    user_prompt = f"""Lịch sử cuộc trò chuyện:
-    {conversation_history}
-    
-    Câu hỏi hiện tại của người dùng:
-    {current_query}
-    
-    Hãy tạo một query tìm kiếm ngắn gọn và hiệu quả dựa trên thông tin trên."""
-
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-
-    # Gọi API để generate query
-    generated_query = generate_together(
-        model=model,
-        messages=messages,
-        max_tokens=100,
-        temperature=0.7
-    )
-
-    return generated_query.strip()
