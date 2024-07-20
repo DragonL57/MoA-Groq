@@ -13,7 +13,6 @@ from utils import (
     google_search,
     extract_snippets,
     expand_query,
-    generate_search_query,
     DEBUG,
 )
 import streamlit as st
@@ -302,7 +301,7 @@ def main():
             model = st.selectbox(
                 "Main model (aggregator model)",
                 default_reference_models,
-                index=default_reference_models.index("llama3-8b-8192") if st.session_state.web_search_enabled else 0
+                index=default_reference_models.index("llama3-groq-70b-8192-tool-use-preview") if st.session_state.web_search_enabled else 0
             )
             temperature = st.slider("Temperature", 0.0, 2.0, 0.5, 0.1)
             max_tokens = st.slider("Max tokens", 1, 8192, 2048, 1)
