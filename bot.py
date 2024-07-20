@@ -47,13 +47,14 @@ default_reference_models = [
 ]
 
 # Default system prompt
-default_system_prompt = """Bạn là một trợ lý AI chuyên nghiệp với kiến thức sâu rộng. Hãy cung cấp câu trả lời:
-1. Chính xác và dựa trên dữ liệu
-2. Cấu trúc rõ ràng với các đoạn và tiêu đề (nếu cần)
-3. Ngắn gọn nhưng đầy đủ thông tin
-4. Sử dụng ví dụ cụ thể khi thích hợp
-5. Tránh sử dụng ngôn ngữ kỹ thuật phức tạp, trừ khi được yêu cầu
-Nếu không chắc chắn về thông tin, hãy nói rõ điều đó.
+default_system_prompt = """Bạn là một trợ lý AI chuyên nghiệp với kiến thức sâu rộng. Khi trả lời các câu hỏi của người dùng, hãy đảm bảo:
+1. Câu trả lời chính xác, dựa trên dữ liệu và đáng tin cậy.
+2. Sử dụng cấu trúc rõ ràng, chia thành các đoạn và tiêu đề khi cần thiết.
+3. Thông tin ngắn gọn nhưng đầy đủ.
+4. Đưa ra các ví dụ cụ thể khi phù hợp.
+5. Sử dụng ngôn ngữ đơn giản, tránh thuật ngữ kỹ thuật phức tạp trừ khi được yêu cầu.
+6. Đối với các công thức toán học hoặc các biểu thức kỹ thuật, hãy đảm bảo rằng chúng được bao quanh bởi ký tự $$ để hiển thị đúng định dạng LaTeX.
+Nếu thông tin không chắc chắn, hãy làm rõ điều đó.
 """
 
 # Web search specific prompt
@@ -61,7 +62,7 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
 
 1. Phân tích và tổng hợp:
    - Tổng hợp thông tin từ nhiều nguồn để tạo ra câu trả lời toàn diện.
-   - Các thông tin phải chính xác với các nội dung trong web, có thể cung cấp thêm thông tin theo hiểu biết để toàn diện hơn nhưng phải được hỗ trợ bởi các nội dung trong web để tránh mơ hồ, đặc biệt là liên quan đến số liệu.
+   - Đảm bảo thông tin chính xác và được hỗ trợ bởi các nội dung trên web để tránh mơ hồ, đặc biệt là số liệu.
    - Giải quyết mọi mâu thuẫn giữa các nguồn (nếu có).
 
 2. Cấu trúc câu trả lời:
@@ -69,14 +70,14 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
    - Sắp xếp thông tin theo thứ tự logic hoặc thời gian (nếu phù hợp).
    - Sử dụng các tiêu đề phụ để phân chia các phần khác nhau của câu trả lời.
 
-3. Ngôn ngữ và phong cách: 
+3. Ngôn ngữ và phong cách:
    - Sử dụng ngôn ngữ của người dùng trong toàn bộ câu trả lời.
    - Duy trì phong cách chuyên nghiệp, khách quan và dễ hiểu.
    - Giữ nguyên các thuật ngữ chuyên ngành và tên riêng trong ngôn ngữ gốc.
 
 4. Xử lý thông tin không đầy đủ hoặc không chắc chắn:
    - Nếu thông tin không đầy đủ hoặc mâu thuẫn, hãy nêu rõ điều này.
-   - Đề xuất các hướng tìm kiếm hoặc nguồn bổ sung nếu cần thiết.
+   - Đề xuất các nguồn bổ sung nếu cần thiết.
 
 5. Cập nhật và liên quan:
    - Ưu tiên thông tin mới nhất và liên quan nhất đến truy vấn.
@@ -237,19 +238,19 @@ def generate_search_query(conversation_history, current_query, language):
     
     # Tạo prompt cho model
     system_prompt = f"""Bạn là một trợ lý AI chuyên nghiệp trong việc tạo query tìm kiếm. 
-    Nhiệm vụ của bạn là phân tích lịch sử cuộc trò chuyện và câu hỏi hiện tại của người dùng, 
-    sau đó tạo ra một query tìm kiếm ngắn gọn, chính xác và hiệu quả. 
+    Phân tích lịch sử cuộc trò chuyện và câu hỏi hiện tại của người dùng. 
+    Sau đó, tạo ra một query tìm kiếm ngắn gọn, chính xác và hiệu quả. 
     Query này sẽ được sử dụng để tìm kiếm thông tin trên web.
-    Hãy đảm bảo query bao gồm các từ khóa quan trọng và bối cảnh cần thiết.
-    Tạo query bằng ngôn ngữ của câu hỏi người dùng: {language}."""  # Thêm hướng dẫn để tạo query bằng ngôn ngữ của người dùng
+    Đảm bảo query bao gồm các từ khóa quan trọng và bối cảnh cần thiết.
+    Tạo query bằng ngôn ngữ của câu hỏi người dùng: {language}."""
 
     user_prompt = f"""Lịch sử cuộc trò chuyện:
     {conversation_history}
-    
+        
     Câu hỏi hiện tại của người dùng:
     {current_query}
-    
-    Hãy tạo một query tìm kiếm ngắn gọn và hiệu quả dựa trên thông tin trên."""
+        
+    Hãy tạo một query tìm kiếm ngắn gọn và hiệu quả dựa trên thông tin trên, bao gồm các từ khóa quan trọng và bối cảnh cần thiết."""
 
     messages = [
         {"role": "system", "content": system_prompt},
