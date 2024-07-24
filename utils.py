@@ -21,7 +21,7 @@ DEBUG = int(os.environ.get("DEBUG", "0"))
 def generate_together(
     model,
     messages,
-    max_tokens=2048,
+    max_tokens=4096,
     temperature=0.7,
     streaming=True,
 ):
@@ -88,7 +88,7 @@ def generate_together(
 def generate_openai(
     model,
     messages,
-    max_tokens=2048,
+    max_tokens=4096,
     temperature=0.7,
 ):
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -153,7 +153,7 @@ def translate_text(text, translation_model):
             endpoint,
             json={
                 "model": translation_model,
-                "max_tokens": 2048,
+                "max_tokens": 4096,
                 "temperature": 0.7,
                 "messages": messages,
             },
@@ -207,7 +207,7 @@ def generate_with_references(
     model,
     messages,
     references=[],
-    max_tokens=2048,
+    max_tokens=4096,
     temperature=0.7,
     generate_fn=generate_together,
 ):
