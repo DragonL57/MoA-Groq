@@ -38,10 +38,12 @@ class SharedValue:
 
 # Default reference models
 default_reference_models = [
+    "llama-3.1-70b-versatile",
     "llama3-groq-70b-8192-tool-use-preview",
     "llama3-70b-8192",
-    "gemma2-9b-it",
+    "llama-3.1-8b-instant",
     "llama3-8b-8192",
+    "gemma2-9b-it",
     "gemma-7b-it",
 ]
 
@@ -61,18 +63,17 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
 
 1. Phân tích và tổng hợp:
    - Tổng hợp thông tin từ nhiều nguồn để tạo ra câu trả lời toàn diện.
-   - Đảm bảo thông tin chính xác và được hỗ trợ bởi các nội dung trên web để tránh mơ hồ, đặc biệt là số liệu.
+   - Có thể cung cấp thêm thông tin nhưng phải đảm bảo thông tin chính xác và được hỗ trợ bởi các nội dung trên web để tránh mơ hồ, đặc biệt là số liệu.
    - Giải quyết mọi mâu thuẫn giữa các nguồn (nếu có).
 
 2. Cấu trúc câu trả lời:
    - Bắt đầu bằng một tóm tắt ngắn gọn về chủ đề.
    - Sắp xếp thông tin theo thứ tự logic hoặc thời gian (nếu phù hợp).
-   - Sử dụng các tiêu đề phụ để phân chia các phần khác nhau của câu trả lời.
 
 3. Ngôn ngữ và phong cách:
    - Sử dụng ngôn ngữ của người dùng trong toàn bộ câu trả lời.
-   - Duy trì phong cách chuyên nghiệp, khách quan và dễ hiểu.
-   - Giữ nguyên các thuật ngữ chuyên ngành và tên riêng trong ngôn ngữ gốc.
+   - Duy trì phong cách chuyên nghiệp, khách quan và mạch lạc.
+   - Giữ nguyên các thuật ngữ chuyên ngành và tên riêng trong nguồn gốc.
 
 4. Xử lý thông tin không đầy đủ hoặc không chắc chắn:
    - Nếu thông tin không đầy đủ hoặc mâu thuẫn, hãy nêu rõ điều này.
@@ -86,10 +87,14 @@ web_search_prompt = """Bạn là một trợ lý AI chuyên nghiệp với khả
    - Kết thúc bằng cách hỏi người dùng xem họ cần làm rõ hoặc bổ sung thông tin gì không.
    - Đề xuất các câu hỏi liên quan hoặc chủ đề mở rộng dựa trên nội dung tìm kiếm.
 
+7. Công thức, biểu thức toán học:
+   - Nếu có công thức toán học, hãy trình bày, xây dựng lại công thức đó và đảm bảo rằng các biểu thức toán học được bao quanh bởi ký tự $$ để hiển thị đúng định dạng LaTeX.
+   - Sau khi trình bày công thức, biểu thức toán học, hãy xuống hàng rồi mới giải thích công thức, biểu thức toán học đó.
+
 Nội dung từ các trang web:
 {web_contents}
 
-Hãy trả lời câu hỏi của người dùng dựa trên các hướng dẫn trên và nội dung web được cung cấp. Đảm bảo câu trả lời của bạn chính xác với thông tin từ các trang web, toàn diện và hữu ích.
+Hãy trả lời câu hỏi của người dùng dựa trên các hướng dẫn trên và nội dung web được cung cấp. Đảm bảo câu trả lời của bạn chính xác với thông tin từ các trang web, toàn diện và hữu ích. Đảm bảo rằng các biểu thức toán học được bao quanh bởi ký tự $$ để hiển thị đúng định dạng LaTeX.
 """
 
 # Initialize session state
@@ -193,7 +198,7 @@ Made by Võ Mai Thế Long 👨‍🏫
 Powered by LLM models from Groq.com
 """
 
-def process_fn(item, temperature=0.7, max_tokens=2048):
+def process_fn(item, temperature=0.7, max_tokens=8000):
     references = item.get("references", [])
     model = item["model"]
     messages = item["instruction"]
@@ -219,11 +224,7 @@ def run_timer(stop_event, elapsed_time):
     while not stop_event.is_set():
         elapsed_time.set(time.time() - start_time)
         time.sleep(0.1)
-
-def translate_response(response, translation_model, language_code):
-    translated_response = translate_text(response, translation_model)
-    return translated_response
-
+        
 def extract_url_from_prompt(prompt):
     # Implement a function to extract URL from the prompt
     import re
@@ -282,7 +283,7 @@ def main():
             st.session_state.web_search_enabled = web_search_enabled
             if web_search_enabled:
                 st.session_state.selected_models = default_reference_models.copy()
-                st.session_state.selected_models.append("llama3-groq-70b-8192-tool-use-preview")  # Thêm mô hình llama3-8b-8192
+                st.session_state.selected_models.append("llama-3.1-70b-versatile")  # Thêm mô hình llama3-8b-8192
 
         st.header("Additional System Instructions")
         user_prompt = st.text_area("Add your instructions", value=st.session_state.user_system_prompt, height=100)
@@ -301,10 +302,10 @@ def main():
             model = st.selectbox(
                 "Main model (aggregator model)",
                 default_reference_models,
-                index=default_reference_models.index("llama3-groq-70b-8192-tool-use-preview") if st.session_state.web_search_enabled else 0
+                index=default_reference_models.index("llama-3.1-70b-versatile") if st.session_state.web_search_enabled else 0
             )
-            temperature = st.slider("Temperature", 0.0, 2.0, 0.5, 0.1)
-            max_tokens = st.slider("Max tokens", 1, 8192, 2048, 1)
+            temperature = st.slider("Temperature", 0.0, 2.0, 0.7, 0.1)
+            max_tokens = st.slider("Max tokens", 1, 8192, 8000, 1)
 
             st.subheader("Reference Models")
             for i, ref_model in enumerate(default_reference_models):
@@ -314,10 +315,6 @@ def main():
                 else:
                     if ref_model in st.session_state.selected_models:
                         st.session_state.selected_models.remove(ref_model)
-
-            st.subheader("Translation Model")
-            selected_translation_model = st.selectbox("Select Translation Model", default_reference_models, index=2)
-            st.session_state.selected_translation_model = selected_translation_model
 
         # Start new conversation button
         if st.button("Start New Conversation", key="new_conversation"):
@@ -453,12 +450,6 @@ def main():
                         else:
                             full_response += chunk
 
-                    # Translate the response if necessary
-                    if user_language != 'en':  # Assuming 'en' is the default language of the response
-                        full_response = translate_text(full_response, st.session_state.selected_translation_model)
-
-                    # Display the translated response with sources
-                    # formatted_response = format_response_with_sources(full_response, sources)
                     formatted_response = full_response
 
                     with st.chat_message("assistant"):
