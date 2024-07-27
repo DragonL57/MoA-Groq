@@ -15,19 +15,25 @@ default_config = {
 
 layer_agent_config_def = {
     "layer_agent_1": {
-        "system_prompt": "Think through your response step by step. {helper_response}",
-        "model_name": "llama3-groq-70b-8192-tool-use-preview"
+        "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
+        "model_name": "llama3-groq-70b-8192-tool-use-preview",
+        "temperature": 0.1
     },
     "layer_agent_2": {
-        "system_prompt": "Respond with a thought and then your response to the question. {helper_response}",
-        "model_name": "llama3-70b-8192",
-        "temperature": 0.7
+        "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
+        "model_name": "llama-3.1-70b-versatile",
+        "temperature": 0.2
     },
     "layer_agent_3": {
-        "system_prompt": "You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
-        "model_name": "gemma2-9b-it"
+        "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
+        "model_name": "llama3-70b-8192",
+        "temperature": 0.4
     },
-
+    "layer_agent_4": {
+        "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
+        "model_name": "gemma2-9b-it",
+        "temperature": 0.5
+    },
 }
 
 # Recommended Configuration
@@ -40,22 +46,22 @@ rec_config = {
 
 layer_agent_config_rec = {
     "layer_agent_1": {
-        "system_prompt": "Think through your response step by step. {helper_response}",
+        "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
         "model_name": "llama3-groq-70b-8192-tool-use-preview",
         "temperature": 0.1
     },
     "layer_agent_2": {
-        "system_prompt": "Respond with a thought and then your response to the question. {helper_response}",
+        "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
         "model_name": "llama-3.1-70b-versatile",
         "temperature": 0.2
     },
     "layer_agent_3": {
-        "system_prompt": "You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
+        "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
         "model_name": "llama3-70b-8192",
         "temperature": 0.4
     },
     "layer_agent_4": {
-        "system_prompt": "You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
+        "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
         "model_name": "gemma2-9b-it",
         "temperature": 0.5
     },
@@ -142,9 +148,6 @@ valid_model_names = [
     "gemma2-9b-it",
     "gemma-7b-it",
 ]
-
-st.markdown("<a href='https://groq.com'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
-st.write("---")
 
 
 
@@ -233,11 +236,6 @@ with st.sidebar:
     - LLMs: [Groq](https://groq.com/)
     - Paper: [arXiv:2406.04692](https://arxiv.org/abs/2406.04692)
     """)
-
-# Main app layout
-st.header("Mixture of Agents", anchor=False)
-st.write("A demo of the Mixture of Agents architecture proposed by Together AI, Powered by Groq LLMs.")
-st.image("./static/moa_groq.svg", caption="Mixture of Agents Workflow", width=1000)
 
 # Display current configuration
 with st.expander("Current MOA Configuration", expanded=False):
