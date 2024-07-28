@@ -9,7 +9,7 @@ import copy
 # Default configuration
 default_config = {
     "main_model": "llama-3.1-70b-versatile",
-    "cycles": 2,
+    "cycles": 3,
     "layer_agent_config": {}
 }
 
@@ -40,7 +40,7 @@ layer_agent_config_def = {
 
 rec_config = {
     "main_model": "llama-3.1-70b-versatile",
-    "cycles": 2,
+    "cycles": 3,
     "layer_agent_config": {}
 }
 
