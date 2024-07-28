@@ -14,26 +14,36 @@ default_config = {
 }
 
 layer_agent_config_def = {
-    "layer_agent_1": {
-        "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
-        "model_name": "llama3-groq-70b-8192-tool-use-preview",
-        "temperature": 0.1
-    },
-    "layer_agent_2": {
-        "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
-        "model_name": "mixtral-8x7b-32768",
-        "temperature": 0.2
-    },
-    "layer_agent_3": {
-        "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
-        "model_name": "llama3-70b-8192",
-        "temperature": 0.4
-    },
-    "layer_agent_4": {
-        "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
-        "model_name": "gemma2-9b-it",
-        "temperature": 0.5
-    },
+  "layer_agent_1": {
+    "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
+    "model_name": "llama3-groq-70b-8192-tool-use-preview",
+    "temperature": 0.1
+  },
+  "layer_agent_2": {
+    "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
+    "model_name": "mixtral-8x7b-32768",
+    "temperature": 0.2
+  },
+  "layer_agent_3": {
+    "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
+    "model_name": "llama3-70b-8192",
+    "temperature": 0.4
+  },
+  "layer_agent_4": {
+    "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
+    "model_name": "gemma2-9b-it",
+    "temperature": 0.5
+  },
+  "layer_agent_5": {
+    "system_prompt": "The user is living in Viet Nam. Provide an in-depth analysis using different academic perspectives to explain the query. Ensure your explanation is comprehensive and references relevant theories. {helper_response}",
+    "model_name": "llama-3.1-8b-instant",
+    "temperature": 0.3
+  },
+  "layer_agent_6": {
+    "system_prompt": "The user is living in Viet Nam. You are a creativity expert. Approach the problem with innovative and out-of-the-box thinking. {helper_response}",
+    "model_name": "gemma-7b-it",
+    "temperature": 0.6
+  }
 }
 
 # Recommended Configuration
@@ -45,26 +55,36 @@ rec_config = {
 }
 
 layer_agent_config_rec = {
-    "layer_agent_1": {
-        "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
-        "model_name": "llama3-groq-70b-8192-tool-use-preview",
-        "temperature": 0.1
-    },
-    "layer_agent_2": {
-        "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
-        "model_name": "mixtral-8x7b-32768",
-        "temperature": 0.2
-    },
-    "layer_agent_3": {
-        "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
-        "model_name": "llama3-70b-8192",
-        "temperature": 0.4
-    },
-    "layer_agent_4": {
-        "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
-        "model_name": "gemma2-9b-it",
-        "temperature": 0.5
-    },
+  "layer_agent_1": {
+    "system_prompt": "The user is living in Viet Nam. Think through your response step by step. {helper_response}",
+    "model_name": "llama3-groq-70b-8192-tool-use-preview",
+    "temperature": 0.1
+  },
+  "layer_agent_2": {
+    "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
+    "model_name": "mixtral-8x7b-32768",
+    "temperature": 0.2
+  },
+  "layer_agent_3": {
+    "system_prompt": "The user is living in Viet Nam. You are an expert at logic and reasoning. Always take a logical approach to the answer. {helper_response}",
+    "model_name": "llama3-70b-8192",
+    "temperature": 0.4
+  },
+  "layer_agent_4": {
+    "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
+    "model_name": "gemma2-9b-it",
+    "temperature": 0.5
+  },
+  "layer_agent_5": {
+    "system_prompt": "The user is living in Viet Nam. Provide an in-depth analysis using different academic perspectives to explain the query. Ensure your explanation is comprehensive and references relevant theories. {helper_response}",
+    "model_name": "llama-3.1-8b-instant",
+    "temperature": 0.3
+  },
+  "layer_agent_6": {
+    "system_prompt": "The user is living in Viet Nam. You are a creativity expert. Approach the problem with innovative and out-of-the-box thinking. {helper_response}",
+    "model_name": "gemma-7b-it",
+    "temperature": 0.6
+  }
 }
 
 
