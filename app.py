@@ -9,7 +9,7 @@ import copy
 # Default configuration
 default_config = {
     "main_model": "llama-3.1-70b-versatile",
-    "cycles": 3,
+    "cycles": 2,
     "layer_agent_config": {}
 }
 
@@ -21,7 +21,7 @@ layer_agent_config_def = {
     },
     "layer_agent_2": {
         "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
-        "model_name": "llama-3.1-70b-versatile",
+        "model_name": "mixtral-8x7b-32768",
         "temperature": 0.2
     },
     "layer_agent_3": {
@@ -40,7 +40,7 @@ layer_agent_config_def = {
 
 rec_config = {
     "main_model": "llama-3.1-70b-versatile",
-    "cycles": 3,
+    "cycles": 2,
     "layer_agent_config": {}
 }
 
@@ -52,7 +52,7 @@ layer_agent_config_rec = {
     },
     "layer_agent_2": {
         "system_prompt": "The user is living in Viet Nam. Respond with a thought and then your response to the question. {helper_response}",
-        "model_name": "llama-3.1-70b-versatile",
+        "model_name": "mixtral-8x7b-32768",
         "temperature": 0.2
     },
     "layer_agent_3": {
@@ -147,6 +147,7 @@ valid_model_names = [
     "llama3-8b-8192",
     "gemma2-9b-it",
     "gemma-7b-it",
+    "mixtral-8x7b-32768",
 ]
 
 
