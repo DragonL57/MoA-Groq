@@ -40,9 +40,9 @@ layer_agent_config_def = {
     "temperature": 0.3
   },
   "layer_agent_6": {
-    "system_prompt": "The user is living in Viet Nam. You are a creativity expert. Approach the problem with innovative and out-of-the-box thinking. {helper_response}",
+    "system_prompt": "The user is living in Viet Nam. Ensure the response is factually accurate by cross-checking with reliable sources and data. {helper_response}",
     "model_name": "gemma-7b-it",
-    "temperature": 0.6
+    "temperature": 0.2
   }
 }
 
@@ -81,12 +81,11 @@ layer_agent_config_rec = {
     "temperature": 0.3
   },
   "layer_agent_6": {
-    "system_prompt": "The user is living in Viet Nam. You are a creativity expert. Approach the problem with innovative and out-of-the-box thinking. {helper_response}",
+    "system_prompt": "The user is living in Viet Nam. Ensure the response is factually accurate by cross-checking with reliable sources and data. {helper_response}",
     "model_name": "gemma-7b-it",
-    "temperature": 0.6
+    "temperature": 0.2
   }
 }
-
 
 def stream_response(messages: Iterable[ResponseChunk]):
     layer_outputs = {}
