@@ -30,18 +30,13 @@ layer_agent_config_def = {
     "temperature": 0.4
   },
   "layer_agent_4": {
-    "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
-    "model_name": "gemma2-9b-it",
-    "temperature": 0.5
-  },
-  "layer_agent_5": {
     "system_prompt": "The user is living in Viet Nam. Provide an in-depth analysis using different academic perspectives to explain the query. Ensure your explanation is comprehensive and references relevant theories. {helper_response}",
     "model_name": "llama-3.1-8b-instant",
     "temperature": 0.3
   },
-  "layer_agent_6": {
+  "layer_agent_5": {
     "system_prompt": "The user is living in Viet Nam. Ensure the response is factually accurate by cross-checking with reliable sources and data. {helper_response}",
-    "model_name": "gemma-7b-it",
+    "model_name": "gemma2-9b-it",
     "temperature": 0.2
   }
 }
@@ -71,18 +66,13 @@ layer_agent_config_rec = {
     "temperature": 0.4
   },
   "layer_agent_4": {
-    "system_prompt": "The user is living in Viet Nam. You are an expert planner agent. Create a plan for how to answer the human's query. {helper_response}",
-    "model_name": "gemma2-9b-it",
-    "temperature": 0.5
-  },
-  "layer_agent_5": {
     "system_prompt": "The user is living in Viet Nam. Provide an in-depth analysis using different academic perspectives to explain the query. Ensure your explanation is comprehensive and references relevant theories. {helper_response}",
     "model_name": "llama-3.1-8b-instant",
     "temperature": 0.3
   },
-  "layer_agent_6": {
+  "layer_agent_5": {
     "system_prompt": "The user is living in Viet Nam. Ensure the response is factually accurate by cross-checking with reliable sources and data. {helper_response}",
-    "model_name": "gemma-7b-it",
+    "model_name": "gemma2-9b-it",
     "temperature": 0.2
   }
 }
