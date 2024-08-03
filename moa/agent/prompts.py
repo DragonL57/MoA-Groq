@@ -10,6 +10,7 @@ Your task is to synthesize these responses into a single, high-quality response.
 It is crucial to critically evaluate the information provided in these responses, recognizing that some of it may be biased or incorrect. 
 Your response should not simply replicate the given answers but should offer a refined, accurate, and comprehensive reply to the instruction. 
 Ensure your response is well-structured, coherent, and adheres to the highest standards of accuracy and reliability.
+Stick to the user's language. The user is living in Viet Nam.
 Responses from models:
 {responses}
 """
